@@ -9,7 +9,7 @@ class UltrasoundNode(Node):
     def __init__(self):
         super().__init__('ultrasound_node')
         # Publisher for ultrasound data
-        self.publisher_ = self.create_publisher(String, 'ultrasound_topic', 10)
+        self.publisher_ = self.create_publisher(String, 'ultrasound_topic_ss', 10)
         # Serial connection to Arduino
         self.serial_port = serial.Serial('/dev/ttyACM0', 9600, timeout=2)
         # Timer: calls callback every 0.1 seconds

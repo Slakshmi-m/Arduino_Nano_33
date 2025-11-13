@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+import serial
+import cv2
+import numpy as np
+
+class UltrasoundNode(Node):
+    def __init__(self):
+        super().__init__('ultrasound_node')
+
+        # Publisher for ultrasound data
+        self.publisher_ = self.create_publisher(String, 'ultrasound_topic_ss', 10)
+
+        # Serial connection to Arduino
+        self.serial_port = serial.Serial('/dev/ttyACM0', 9600, timeout=2)
+
+        # Timer: calls callback every 0.1 seconds
+        timer_period = 0.1
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+        # Visualization setup
+        self.window_name = "Ultrasonic Distance Visualizer"
+        cv2.namedWindow(self.window_name)
+        self.width = 600
+        self.height = 200
+        self.x_pos = 0  # moving dot position
+
+    def timer_callback(self):
+        if self.serial_port.in_waiting > 0:
+            data_line = self.serial_port.readline().decode('ascii').strip()
+
+            try:
+                distance = float(data_line)  # Convert string to number
+            except ValueError:
+                self.get_logger().warn(f"Invalid data: {data_line}")
+                return
+
+            # Publish ROS message
+            msg = String()
+            msg.data = str(distance)
+            self.publisher_.publish(msg)
+
+            # Log published message
+            self.get_logger().info(f'Publishing distance: {distance} cm')
+
+            # Draw visualization
+            self.display_distance(distance)
+
+    def display_distance(self, distance):
+        # Create blank white image
+        img = np.ones((self.height, self.width, 3), dtype=np.uint8) * 255
+
+        # Normalize distance to fit window height (max 200 cm for visualization)
+        max_display_distance = 200.0
+        norm_distance = min(distance, max_display_distance)
+        y_pos = int(self.height - (norm_distance / max_display_distance) * self.height)
+
+        # Move dot horizontally
+        self.x_pos = (self.x_pos + 5) % self.width
+
+        # Draw the dot
+        cv2.circle(img, (self.x_pos, y_pos), 5, (0, 0, 255), -1)
+        cv2.putText(img, f"Distance: {distance:.2f} cm", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+
+        cv2.imshow(self.window_name, img)
+        cv2.waitKey(1)
+
+    def destroy_node(self):
+        super().destroy_node()
+        cv2.destroyAllWindows()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = UltrasoundNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
