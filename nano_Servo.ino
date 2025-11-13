@@ -1,4 +1,4 @@
-#include<Servo.h>
+#include <Servo.h>
 
 Servo myServo;
 int pos = 0;
