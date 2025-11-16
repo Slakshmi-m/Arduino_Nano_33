@@ -3,10 +3,12 @@
         {
             "name": "Arduino",
             "includePath": [
+                "${workspaceFolder}/libraries/**",
                 "${workspaceFolder}/**",
+                "/usr/lib/avr/include",
                 "/usr/share/arduino/hardware/arduino/avr/cores/arduino",
-                "/usr/share/arduino/hardware/arduino/avr/libraries/**",
-                "${workspaceFolder}/libraries/**"
+                "/usr/share/arduino/hardware/arduino/avr/variants/standard",
+                "/usr/share/arduino/hardware/arduino/avr/libraries/**"
             ],
             "defines": [
                 "__AVR_ATmega328P__"
